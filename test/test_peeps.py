@@ -38,12 +38,19 @@ class TestStats(unittest.TestCase):
         stats = peeps.gen_stats()
         self.assertTrue(isinstance(stats, dict))
 
-    def test_dict_mins(self):
+    def test_stat_mins(self):
         stats   = { 'Str': 10, 'Int': 1, 'Wis': 1, 'Con': 10, 'Cha': 5 }
         mins    = { 'Int': 10, 'Wis': 10, 'Cha': 10 }
-        results = peeps.dict_mins(stats, mins)
+        results = peeps.stat_mins(stats, mins)
         for stat in results.keys():
             self.assertTrue(results[stat] == 10)
+
+    def test_stat_maxs(self):
+        stats   = { 'Str': 10, 'Int': 14, 'Wis': 21, 'Dex': 10, 'Con': 10, 'Cha': 5 }
+        mins    = { 'Str': 2, 'Wis': 2, 'Dex': 2 }
+        results = peeps.stat_maxs(stats, mins)
+        for stat in mins.keys():
+            self.assertTrue(results[stat] == 2)
 
 
 class TestPeep(unittest.TestCase):
@@ -90,4 +97,13 @@ class TestPeepChild(unittest.TestCase):
         self.assertTrue(c.l_name == 'Garibaldi')
         self.assertTrue(c.age == 5)
 
+class TestGetName(unittest.TestCase):
 
+    def test_last_name(self):
+        last    = peeps.get_name('last')
+        male    = peeps.get_name('male')
+        female  = peeps.get_name('female')
+        self.assertTrue(len(last)   >= 2)
+        self.assertTrue(len(male)   >= 2)
+        self.assertTrue(len(female) >= 2)
+        

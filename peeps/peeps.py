@@ -46,13 +46,22 @@ def gen_stats(roll = 3, keep = 3):
         stats[stat] = roller(roll,6,keep) 
     return stats
 
-def dict_mins(stats, mins):
+def stat_mins(stats, mins):
     """
     Raises the base stats to the minimums provided in mins
     """
     for stat in mins.keys():
         stats[stat] = max(stats[stat], mins[stat])
     return stats
+
+def  stat_maxs(stats, maxs):
+    """
+    Lowers the base stats to the maximums provided in maxs
+    """
+    for stat in maxs.keys():
+        stats[stat] = min(stats[stat], maxs[stat])
+    return stats
+        
 
 def start_family(data):
     """
@@ -61,9 +70,9 @@ def start_family(data):
     family      = []
     father_age  = data.get('f_age', 16)
     mother_age  = data.get('m_age', father_age - 2)
-    last_name   = data.get('l_name', "Garibaldi")
-    f_f_name    = data.get('f_f_name', "Georg")
-    m_f_name    = data.get('m_f_name', "Aemelia")
+    last_name   = data.get('l_name', get_name('last'))
+    f_f_name    = data.get('f_f_name', get_name('male'))
+    m_f_name    = data.get('m_f_name', get_name('female'))
     father      = peep_builder({'age': father_age, 'l_name': last_name, 'gender': 'm', 'f_name': f_f_name})
     mother      = peep_builder({'age': mother_age, 'l_name': last_name, 'gender': 'f', 'f_name': m_f_name})
     family.append(father)
@@ -73,6 +82,8 @@ def start_family(data):
     while kid_years > 0:
         kid_data['age'] = kid_years
         family.append(peep_child(kid_data))
+        kid_data.pop('f_name', None)
+        kid_data.pop('gender', None)
         kid_years -= random.randint(1,3)
     return family
 
@@ -96,8 +107,20 @@ def peep_builder(data):
     """
     Generates the data and builds it into a Peep
     """
+    young_child_max = { 'Str': 3, 'Wis': 3, 'Dex': 3 }
+    older_child_max = { 'Str': 5, 'Wis': 5, 'Dex': 5 }
     data['stats']   = gen_stats()
+    if data['age'] < 5:
+        data['stats'] = stat_maxs(data['stats'], young_child_max)
+    elif data['age'] < 12:
+        data['stats'] = stat_maxs(data['stats'], older_child_max)
     data['gender']  = data.get('gender', random.choice(['m', 'f']))
+    data['l_name']  = data.get('l_name', get_name('last'))
+    if data['gender'] == 'f':
+        data['f_name'] = data.get('f_name', get_name('female'))
+    else:
+        data['f_name'] = data.get('f_name', get_name('male'))
+
     return Peep(data)
 
 def peep_child(data):
@@ -105,7 +128,9 @@ def peep_child(data):
     Generates a child, and modifies the stats
     """
     # needs to modify the stats
+
     child = peep_builder(data)
+    
     return child
 
 def peep_inserter(peep):
@@ -113,6 +138,32 @@ def peep_inserter(peep):
     Inserts peep into DB
     """
     pass
+
+def get_name(name):
+    """
+    Gets one random name (last, female, male) from a database
+    """
+    datafile    = 'names.db'
+    datastore   = os.path.join(datadir, datafile)
+    if not os.path.exists(datastore):
+        raise FileNotFoundError
+    if name == "male":
+        table   = 'humaniti_male_first'
+    elif name == "female":
+        table   = 'humaniti_female_first'
+    else:
+        table   = 'humaniti_last'
+    try:
+        con     = sqlite3.connect(datastore)
+    except Exception as e:
+        print(e)
+    cur         = con.cursor()
+    result      = cur.execute("SELECT * from {} ORDER BY RANDOM() LIMIT 1".format(table))
+    r           = result.fetchone()[0]
+    cur.close()
+    return r
+
+    
 
 def peep_init():
     """ 
