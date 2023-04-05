@@ -46,6 +46,7 @@ def gen_stats(roll = 3, keep = 3):
         stats[stat] = roller(roll,6,keep) 
     return stats
 
+
 def stat_mins(stats, mins):
     """
     Raises the base stats to the minimums provided in mins
@@ -53,6 +54,7 @@ def stat_mins(stats, mins):
     for stat in mins.keys():
         stats[stat] = max(stats[stat], mins[stat])
     return stats
+
 
 def  stat_maxs(stats, maxs):
     """
@@ -87,6 +89,7 @@ def start_family(data):
         kid_years -= random.randint(1,3)
     return family
 
+
 def print_family(family):
     """
     Takes a list of family members, and prints each
@@ -97,11 +100,13 @@ def print_family(family):
         for member in family[2:]:
             print("Child: {}\n".format(member))
 
+
 def time_for_kids(m_age):
     """
     Returns an int of mother's age, minus 16, minus 1-3
     """
     return m_age - 16 - random.randint(1,3)
+
 
 def peep_builder(data):
     """
@@ -110,6 +115,7 @@ def peep_builder(data):
     young_child_max = { 'Str': 3, 'Wis': 3, 'Dex': 3 }
     older_child_max = { 'Str': 5, 'Wis': 5, 'Dex': 5 }
     data['stats']   = gen_stats()
+    data['age']     = data.get('age', 16)
     if data['age'] < 5:
         data['stats'] = stat_maxs(data['stats'], young_child_max)
     elif data['age'] < 12:
@@ -123,21 +129,21 @@ def peep_builder(data):
 
     return Peep(data)
 
+
 def peep_child(data):
     """
     Generates a child, and modifies the stats
     """
-    # needs to modify the stats
-
     child = peep_builder(data)
-    
     return child
+
 
 def peep_inserter(peep):
     """
     Inserts peep into DB
     """
     pass
+
 
 def get_name(name):
     """
@@ -163,7 +169,6 @@ def get_name(name):
     cur.close()
     return r
 
-    
 
 def peep_init():
     """ 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 # name    :	test/test_peeps.py
-# version :	0.0.1
+# version :	0.0.2
 # date    :	20230329
 # author  :	Leam Hall
-# desc    :	Test the roller
+# desc    :	Test all things peep
 
 
 import unittest
@@ -76,6 +76,12 @@ class TestPeepBuilder(unittest.TestCase):
         self.assertTrue(p.name()        == "George Mythe")
         self.assertTrue(p.gender        == 'm')
 
+    def test_build_defaults(self):
+        data    = {}
+        p       = peeps.peep_builder(data)
+        self.assertTrue(p.age == 16)
+        self.assertTrue(p.gender in ['m', 'f'])
+
 
 class TestStartFamily(unittest.TestCase):
     
@@ -96,6 +102,7 @@ class TestPeepChild(unittest.TestCase):
         c       = peeps.peep_child(data)
         self.assertTrue(c.l_name == 'Garibaldi')
         self.assertTrue(c.age == 5)
+
 
 class TestGetName(unittest.TestCase):
 

@@ -41,3 +41,6 @@ if __name__ == "__main__":
             data['f_age'] = args.f_age 
         family = peeps.start_family(data)
         peeps.print_family(family)
+    else:
+        print(peeps.peep_builder({}))
+ 
