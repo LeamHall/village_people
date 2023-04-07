@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
-# name    :	peeps.py
+# name    :	make_peeps.py
 # version :	0.0.1
 # date    :	20230329
 # author  :	Leam Hall
 # desc    :	Create a small number of NPCs for a 3d6 game
 
+"""
+make_peeps.py creates a number of 3d6 OGL type fantasy characters.
+"""
 
 import argparse
-import random
+import sys
 
 from peeps import peeps
 
@@ -17,8 +20,8 @@ if __name__ == "__main__":
     args = {}
     argparser = argparse.ArgumentParser()
     argparser.add_argument(
-        "-i", "--init", 
-        action  = "store_true", 
+        "-i", "--init",
+        action  = "store_true",
         help    = "Initialize data")
     argparser.add_argument(
         "-f", "--family",
@@ -29,7 +32,7 @@ if __name__ == "__main__":
         "--f-age",
         default = 16,
         type    = int,
-        help    = "Age of the father, in years") 
+        help    = "Age of the father, in years")
     args = argparser.parse_args()
 
     if args.init:
@@ -38,7 +41,7 @@ if __name__ == "__main__":
     elif args.family:
         data = {}
         if args.f_age > 14:
-            data['f_age'] = args.f_age 
+            data['f_age'] = args.f_age
         family = peeps.start_family(data)
         peeps.print_family(family)
     else:

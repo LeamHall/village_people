@@ -6,21 +6,23 @@
 # author  :	Leam Hall
 # desc    :	Create a small number of NPCs for a 3d6 game
 
-import argparse
+"""
+peeps.py provides classes and methods to generate, alter, and store Peeps.
+"""
+
 import os
 import random
 import sqlite3
-import sys
 
 
-datadir    = 'data'
+datadir     = 'data'
 stat_names  = ['Str', 'Int', 'Wis', 'Dex', 'Con', 'Cha']
 
 
 def roller(num, die, keep = 0):
-    """ 
-    roller takes two positive integers, and an optional third. 
-    Returns a random int between keep and die * keep 
+    """
+    Takes two positive integers, and an optional third.
+    Returns a random int between keep and die * keep
     """
     num     = int(num)
     die     = int(die)
@@ -31,10 +33,10 @@ def roller(num, die, keep = 0):
     if keep < 0 or keep > num:
         keep = num
     rolls     = []
-    for i in range(num):
+    for _ in range(num):
         rolls.append(random.randint(1,die))
     rolls.sort()
-    return sum(rolls[-keep:]) 
+    return sum(rolls[-keep:])
 
 
 def gen_stats(roll = 3, keep = 3):
@@ -43,7 +45,7 @@ def gen_stats(roll = 3, keep = 3):
     """
     stats = {}
     for stat in stat_names:
-        stats[stat] = roller(roll,6,keep) 
+        stats[stat] = roller(roll,6,keep)
     return stats
 
 
@@ -63,7 +65,7 @@ def  stat_maxs(stats, maxs):
     for stat in maxs.keys():
         stats[stat] = min(stats[stat], maxs[stat])
     return stats
-        
+
 
 def start_family(data):
     """
@@ -75,8 +77,16 @@ def start_family(data):
     last_name   = data.get('l_name', get_name('last'))
     f_f_name    = data.get('f_f_name', get_name('male'))
     m_f_name    = data.get('m_f_name', get_name('female'))
-    father      = peep_builder({'age': father_age, 'l_name': last_name, 'gender': 'm', 'f_name': f_f_name})
-    mother      = peep_builder({'age': mother_age, 'l_name': last_name, 'gender': 'f', 'f_name': m_f_name})
+    father      = peep_builder({
+                    'age': father_age,
+                    'l_name': last_name,
+                    'gender': 'm',
+                    'f_name': f_f_name})
+    mother      = peep_builder({
+                    'age': mother_age,
+                    'l_name': last_name,
+                    'gender': 'f',
+                    'f_name': m_f_name})
     family.append(father)
     family.append(mother)
     kid_years   = time_for_kids(mother_age)
@@ -138,14 +148,14 @@ def peep_child(data):
     return child
 
 
-def peep_inserter(peep):
-    """
-    Inserts peep into DB
-    """
-    pass
+#def peep_inserter(peep):
+#    """
+#    Inserts peep into DB
+#    """
+#    pass
 
 
-def get_name(name):
+def get_name(name_type):
     """
     Gets one random name (last, female, male) from a database
     """
@@ -153,9 +163,9 @@ def get_name(name):
     datastore   = os.path.join(datadir, datafile)
     if not os.path.exists(datastore):
         raise FileNotFoundError
-    if name == "male":
+    if name_type == "male":
         table   = 'humaniti_male_first'
-    elif name == "female":
+    elif name_type == "female":
         table   = 'humaniti_female_first'
     else:
         table   = 'humaniti_last'
@@ -165,20 +175,20 @@ def get_name(name):
         print(e)
     cur         = con.cursor()
     result      = cur.execute("SELECT * from {} ORDER BY RANDOM() LIMIT 1".format(table))
-    r           = result.fetchone()[0]
+    name        = result.fetchone()[0]
     cur.close()
-    return r
+    return name
 
 
 def peep_init():
-    """ 
+    """
     Creates the data dir and initializes the peep.db
     """
     datafile    = 'peeps.db'
     table       = 'peeps'
     datastore   = os.path.join(datadir, datafile)
     if not os.path.exists(datadir):
-        os.makedirs(datadir) 
+        os.makedirs(datadir)
     con         = sqlite3.connect(datastore)
     cur         = con.cursor()
     cur.execute("DROP TABLE IF EXISTS {}".format(table))
@@ -204,10 +214,14 @@ def peep_init():
                     """
     cur.execute(table)
     con.close()
- 
-    
+
+
 class Peep:
-    
+    """
+    Peep holds the data for a generated Peep.
+    Peep.name() returns a string of first and last names.
+    Peep.__str__() returns formatted Peep data.
+    """
     def __init__(self, data):
         self.stats = data.get('stats')
         self.l_name = data.get('l_name', 'Smith')
@@ -216,12 +230,15 @@ class Peep:
         self.gender = data.get('gender', 'f')
 
     def name(self):
+        """
+        Return a string of f_name and l_name
+        """
         return "{} {}".format(self.f_name, self.l_name)
 
     def __str__(self):
         peep_string = "Name: {}  Age: {}\n".format(self.name(), self.age)
-        results = [] 
+        results = []
         for stat in stat_names:
-           results.append("{}: {:2d}".format(stat, self.stats[stat]) )
+            results.append("{}: {:2d}".format(stat, self.stats[stat]) )
         peep_string +=  ", ".join(results)
         return peep_string
