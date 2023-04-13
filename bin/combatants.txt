@@ -1,0 +1,6 @@
+# combatant string:
+# name:group:str:int:wis:dex:con:cha:lvl:hp:ap:skill:wpn_dice(1,2)
+
+Fred:a:18:10:10:18:10:10:1:16:1:4:2
+George:b:10:10:10:10:10:10:1:6:1:1:1
+Samantha:b:10:10:10:10:10:10:1:6:1:1:1
