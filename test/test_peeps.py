@@ -99,18 +99,33 @@ class TestPeepBuilder(unittest.TestCase):
     def test_build_peep(self):
         """basic builder tests"""
         data = {
-            "age": 16,
-            "l_name": "Mythe",
-            "gender": "m",
-            "f_name": "George",
+            "age":      16,
+            "l_name":   "Mythe",
+            "gender":   "m",
+            "f_name":   "George",
+            "is_alive": True,
         }
         peep = peeps.peep_builder(data)
         expected = "Str:"
         self.assertTrue(expected in peep.__str__())
         self.assertTrue(peep.age == 16)
-        self.assertTrue(isinstance(peep.stats, dict))
         self.assertTrue(peep.name() == "George Mythe")
         self.assertTrue(peep.gender == "m")
+        self.assertTrue(peep.is_alive)
+
+    def test_build_old_peep(self):
+        """basic builder tests"""
+        data = {
+            "age":      86,
+            "l_name":   "Mythe",
+            "gender":   "m",
+            "f_name":   "George",
+        }
+        peep = peeps.peep_builder(data)
+        self.assertTrue(peep.age == 86)
+        self.assertFalse(peep.is_alive)
+        self.assertTrue("Deceased" in peep.__str__())
+
 
     def test_build_defaults(self):
         """Tests the default settings of the builder"""
@@ -118,6 +133,9 @@ class TestPeepBuilder(unittest.TestCase):
         peep = peeps.peep_builder(data)
         self.assertTrue(peep.age == 16)
         self.assertTrue(peep.gender in ["m", "f"])
+        self.assertTrue(peep.is_alive)
+        self.assertTrue(isinstance(peep.stats, dict))
+        self.assertTrue("Str" in peep.stats)
 
 
 class TestStartFamily(unittest.TestCase):

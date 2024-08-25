@@ -17,7 +17,10 @@ import sqlite3
 import sys
 
 
-datadir = "data"
+DATADIR = "data"
+MAX_AGE = 80
+MAX_CHILDBEARING_AGE = 30
+
 stat_names = ["Str", "Int", "Wis", "Dex", "Con", "Cha"]
 
 
@@ -97,14 +100,20 @@ def start_family(data):
     )
     family.append(father)
     family.append(mother)
-    kid_years = time_for_kids(mother_age)
+
+    whoa_up = 17 - random.randint(1,3)
+    max_kid_age = mother_age - whoa_up
     kid_data = {"l_name": last_name}
-    while kid_years > 0:
-        kid_data["age"] = kid_years
+    if mother_age > MAX_CHILDBEARING_AGE:
+        min_kid_age = mother_age - MAX_CHILDBEARING_AGE
+    else:
+        min_kid_age = 0
+    while max_kid_age > min_kid_age:
+        kid_data["age"] = max_kid_age
         family.append(peep_child(kid_data))
         kid_data.pop("f_name", None)
         kid_data.pop("gender", None)
-        kid_years -= random.randint(1, 3)
+        max_kid_age -= random.randint(1, 3)
     return family
 
 
@@ -112,18 +121,21 @@ def print_family(family):
     """
     Takes a list of family members, and prints each
     """
-    print("Father: {}\n".format(family[0]))
-    print("Mother: {}\n".format(family[1]))
+    print("Patron: {}\n".format(family[0]))
+    print("Matron: {}\n".format(family[1]))
     if len(family) > 2:
         for member in family[2:]:
-            print("Child: {}\n".format(member))
+            print("  {}\n".format(member))
 
 
 def time_for_kids(m_age):
     """
-    Returns an int of mother's age, minus 16, minus 1-3
+    Returns an int of years for child-bearing, based on mother's age or the 
+    maximum child bearing age, minus a random int for when the lady first 
+    became a mother.
     """
-    return m_age - 16 - random.randint(1, 3)
+    whoa_up = 17 - random.randint(1,3)
+    return min(m_age, MAX_CHILDBEARING_AGE) - whoa_up 
 
 
 def peep_builder(data):
@@ -138,6 +150,8 @@ def peep_builder(data):
         data["stats"] = stat_maxs(data["stats"], young_child_max)
     elif data["age"] < 12:
         data["stats"] = stat_maxs(data["stats"], older_child_max)
+    elif data["age"] > MAX_AGE:
+        data["is_alive"] = False
     data["gender"] = data.get("gender", random.choice(["m", "f"]))
     data["l_name"] = data.get("l_name", get_name("last"))
     if data["gender"] == "f":
@@ -168,7 +182,7 @@ def get_name(name_type):
     Gets one random name (last, female, male) from a database
     """
     datafile = "names.db"
-    datastore = os.path.join(datadir, datafile)
+    datastore = os.path.join(DATADIR, datafile)
     if not os.path.exists(datastore):
         raise FileNotFoundError
     if name_type == "male":
@@ -196,9 +210,9 @@ def peep_init():
     """
     datafile = "peeps.db"
     table = "peeps"
-    datastore = os.path.join(datadir, datafile)
-    if not os.path.exists(datadir):
-        os.makedirs(datadir)
+    datastore = os.path.join(DATADIR, datafile)
+    if not os.path.exists(DATADIR):
+        os.makedirs(DATADIR)
     con = sqlite3.connect(datastore)
     cur = con.cursor()
     cur.execute("DROP TABLE IF EXISTS {}".format(table))
@@ -234,11 +248,12 @@ class Peep:
     """
 
     def __init__(self, data):
-        self.stats = data.get("stats")
-        self.l_name = data.get("l_name", "Smith")
-        self.f_name = data.get("f_name", "Jim")
-        self.age = data.get("age", 16)
-        self.gender = data.get("gender", "f")
+        self.stats      = data.get("stats")
+        self.l_name     = data.get("l_name", "Smith")
+        self.f_name     = data.get("f_name", "Jim")
+        self.age        = data.get("age", 16)
+        self.gender     = data.get("gender", "f")
+        self.is_alive   = data.get("is_alive", True)
 
     def name(self):
         """
@@ -247,11 +262,15 @@ class Peep:
         return "{} {}".format(self.f_name, self.l_name)
 
     def __str__(self):
-        peep_string = "Name: {}  Age: {}\n".format(self.name(), self.age)
-        results = []
-        for stat in stat_names:
-            results.append("{}: {:2d}".format(stat, self.stats[stat]))
-        peep_string += ", ".join(results)
+        peep_string = "{} [{}] Age: {}\n  ".format(
+                self.name(), self.gender.upper(), self.age)
+        if not self.is_alive:
+            peep_string += "Deceased"
+        else:
+            results = []
+            for stat in stat_names:
+                results.append("{}: {:2d}".format(stat, self.stats[stat]))
+            peep_string += ", ".join(results)
         return peep_string
 
 
@@ -277,10 +296,10 @@ if __name__ == "__main__":
         peep_init()
         sys.exit(0)
     elif args.family:
-        data = {}
+        input_data = {}
         if args.f_age > 14:
-            data["f_age"] = args.f_age
-        family = start_family(data)
+            input_data["f_age"] = args.f_age
+        family = start_family(input_data)
         print_family(family)
     else:
         print(peep_builder({}))
