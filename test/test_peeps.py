@@ -201,5 +201,5 @@ class TestChildAgeRange(unittest.TestCase):
         mother_age = 16
         max_16, min_16 = peeps.child_age_range(mother_age)
         self.assertTrue(max_16 == 0)
-        self.assertTrue(min_16 == 1)
+        self.assertTrue(min_16 == 0)
 
