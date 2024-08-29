@@ -17,12 +17,22 @@ import sqlite3
 import sys
 
 
-DATADIR = "data"
-MAX_AGE = 80
-MAX_CHILDBEARING_AGE = 30
+DATADIR                 = "data"
+MAX_AGE                 = 80
+MIN_CHILDBEARING_AGE    = 17
+MAX_CHILDBEARING_AGE    = 30
 
 stat_names = ["Str", "Int", "Wis", "Dex", "Con", "Cha"]
 
+def child_age_range(m_age):
+    """ Returns a max and min of potential children's ages. """
+    if m_age < MIN_CHILDBEARING_AGE:
+        oldest      = 0
+        youngest    = 0
+    else:
+        oldest      = m_age - MIN_CHILDBEARING_AGE
+        youngest    = max(1, m_age - MAX_CHILDBEARING_AGE)
+    return oldest, youngest
 
 def roller(num, die, keep=0):
     """
@@ -101,13 +111,8 @@ def start_family(data):
     family.append(father)
     family.append(mother)
 
-    whoa_up = 17 - random.randint(1,3)
-    max_kid_age = mother_age - whoa_up
+    max_kid_age, min_kid_age = child_age_range(mother_age)
     kid_data = {"l_name": last_name}
-    if mother_age > MAX_CHILDBEARING_AGE:
-        min_kid_age = mother_age - MAX_CHILDBEARING_AGE
-    else:
-        min_kid_age = 0
     while max_kid_age > min_kid_age:
         kid_data["age"] = max_kid_age
         family.append(peep_child(kid_data))
@@ -126,16 +131,6 @@ def print_family(family):
     if len(family) > 2:
         for member in family[2:]:
             print("  {}\n".format(member))
-
-
-def time_for_kids(m_age):
-    """
-    Returns an int of years for child-bearing, based on mother's age or the 
-    maximum child bearing age, minus a random int for when the lady first 
-    became a mother.
-    """
-    whoa_up = 17 - random.randint(1,3)
-    return min(m_age, MAX_CHILDBEARING_AGE) - whoa_up 
 
 
 def peep_builder(data):
@@ -168,13 +163,6 @@ def peep_child(data):
     """
     child = peep_builder(data)
     return child
-
-
-# def peep_inserter(peep):
-#    """
-#    Inserts peep into DB
-#    """
-#    pass
 
 
 def get_name(name_type):

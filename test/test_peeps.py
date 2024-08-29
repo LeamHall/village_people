@@ -181,3 +181,25 @@ class TestGetName(unittest.TestCase):
         self.assertTrue(len(last) >= 2)
         self.assertTrue(len(male) >= 2)
         self.assertTrue(len(female) >= 2)
+
+class TestChildAgeRange(unittest.TestCase):
+    """ Tests the min and max child age range. """
+
+    def test_over_max_childbearing_age(self):
+        mother_age = 84
+        max_84, min_84 = peeps.child_age_range(mother_age)
+        self.assertTrue(max_84 == 67)
+        self.assertTrue(min_84 == 54)
+
+    def test_just_under_max_childbearing_age(self):
+        mother_age = 29
+        max_29, min_29 = peeps.child_age_range(mother_age)
+        self.assertTrue(max_29 == 12)
+        self.assertTrue(min_29 == 1)
+
+    def test_under_min_childbearing_age(self):
+        mother_age = 16
+        max_16, min_16 = peeps.child_age_range(mother_age)
+        self.assertTrue(max_16 == 0)
+        self.assertTrue(min_16 == 1)
+
