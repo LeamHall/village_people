@@ -7,11 +7,12 @@
 # desc    :	Create a small number of NPCs for a 3d6 game
 
 """
-make_peeps.py creates a number of 3d6 OGL type fantasy characters.
+make_peeps.py creates a number of 3d6 (or other) OGL type fantasy characters.
 """
 
 import argparse
 import os
+import os.path
 import random
 import sqlite3
 import sys
@@ -24,6 +25,36 @@ MAX_CHILDBEARING_AGE    = 30
 
 stat_names = ["Str", "Int", "Wis", "Dex", "Con", "Cha"]
 
+def get_from_file(filename, number = 1):
+    """ 
+    Gets number of unique items from a file.
+    Ignores blank and "#" commented lines.
+    """
+
+    options = list()
+    result  = list()
+
+    if not os.path.exists(filename) or not os.path.isfile(filename):
+        raise OSError("File {} does not exist.".format(filename))
+
+    with open(filename, "r") as in_file:
+        for line in in_file:
+            line = line.strip()
+            if line.startswith("#"):
+                continue
+            if len(line):
+                options.append(line)
+
+    if len(options) <= number:
+        return options
+
+    while len(result) < number:
+        possible = random.choice(options)
+        if possible not in result:
+            result.append(possible.title())
+    return result
+
+
 def child_age_range(m_age):
     """ Returns a max and min of potential children's ages. """
     if m_age < MIN_CHILDBEARING_AGE:
@@ -33,6 +64,7 @@ def child_age_range(m_age):
         oldest      = m_age - MIN_CHILDBEARING_AGE
         youngest    = max(1, m_age - MAX_CHILDBEARING_AGE)
     return oldest, youngest
+
 
 def roller(num, die, keep=0):
     """
@@ -153,7 +185,14 @@ def peep_builder(data):
         data["f_name"] = data.get("f_name", get_name("female"))
     else:
         data["f_name"] = data.get("f_name", get_name("male"))
-
+    data["temperament"] = ",".join(
+        get_from_file(os.path.join(DATADIR, "temperaments.txt"), 1))
+    data["plot"] = ",".join(
+        get_from_file(os.path.join(DATADIR, "plots.txt"), 1))
+    data["positive_traits"] = ", ".join(
+        get_from_file(os.path.join(DATADIR, "positive_traits.txt"), 2))
+    data["negative_traits"] = ", ".join(
+        get_from_file(os.path.join(DATADIR, "negative_traits.txt"), 2))
     return Peep(data)
 
 
@@ -242,6 +281,10 @@ class Peep:
         self.age        = data.get("age", 16)
         self.gender     = data.get("gender", "f")
         self.is_alive   = data.get("is_alive", True)
+        self.plot       = data.get("plot", "boring")
+        self.temperament        = data.get("temperament", "boring")
+        self.negative_traits    = data.get("negative_traits", "")
+        self.positive_traits    = data.get("positive_traits", "")
 
     def name(self):
         """
@@ -259,6 +302,12 @@ class Peep:
             for stat in stat_names:
                 results.append("{}: {:2d}".format(stat, self.stats[stat]))
             peep_string += ", ".join(results)
+            peep_string += "\n"
+        peep_string += "Temperament: {}\n".format(self.temperament)
+        peep_string += "Plot: {}\n".format(self.plot)
+        peep_string += "Positive Traits: {}\n".format(self.positive_traits)
+        peep_string += "Negative Traits: {}\n".format(self.negative_traits)
+
         return peep_string
 
 

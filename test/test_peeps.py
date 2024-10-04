@@ -10,6 +10,8 @@
 test_peeps.py tests the make_peeps code.
 """
 
+import os.path
+import tempfile
 import unittest
 
 import make_peeps as peeps
@@ -91,7 +93,10 @@ class TestPeep(unittest.TestCase):
         peep = peeps.Peep(data)
         expected = "Str: 10, Int: 10, Wis: 10, Dex:  9, Con: 10, Cha: 10"
         self.assertTrue(expected in peep.__str__())
-
+        self.assertIn("Temperament: ", peep.__str__())
+        self.assertIn("Plot: ", peep.__str__())
+        self.assertIn("Positive Traits: ", peep.__str__())
+        self.assertIn("Negative Traits: ", peep.__str__())
 
 class TestPeepBuilder(unittest.TestCase):
     """Verifies peep_builder()"""
@@ -182,6 +187,7 @@ class TestGetName(unittest.TestCase):
         self.assertTrue(len(male) >= 2)
         self.assertTrue(len(female) >= 2)
 
+
 class TestChildAgeRange(unittest.TestCase):
     """ Tests the min and max child age range. """
 
@@ -203,3 +209,39 @@ class TestChildAgeRange(unittest.TestCase):
         self.assertTrue(max_16 == 0)
         self.assertTrue(min_16 == 0)
 
+
+class TestGetFromFile(unittest.TestCase):
+    """ Tests the ability to get a number of items from a file. """
+    
+    def setUp(self): 
+        self.test_dir   = tempfile.TemporaryDirectory()
+        test_file_name  = "test_file.txt"
+        self.test_file  = os.path.join(self.test_dir.name, test_file_name)
+        with open( self.test_file , 'w') as f:
+            f.write("cool headed\n")
+            f.write("hot headed\n")
+            f.write("odd\n")
+            f.write("quiet\n")
+
+    def tearDown(self):
+        self.test_dir.cleanup()
+
+    def test_get_missing_file(self):
+        self.assertRaises(OSError, peeps.get_from_file, "fred")
+
+    def test_get_one(self):
+        possible_results = ["cool headed", "hot headed", "odd", "quiet"]
+        result = peeps.get_from_file(self.test_file, 1)
+        for r in result:
+            self.assertIn(r.lower(), possible_results)
+
+    def test_no_comments(self):
+        possible_results = ["#cool headed", "#hot headed", "odd", "#quiet"]
+        for _ in range(10):
+            result = peeps.get_from_file(self.test_file, 1)
+            self.assertNotIn("#", result[0].title())
+
+    def test_get_all(self):
+        result = peeps.get_from_file(self.test_file, 25)
+        self.assertEqual(len(result), 4)
+        
