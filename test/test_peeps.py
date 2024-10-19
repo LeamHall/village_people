@@ -88,15 +88,19 @@ class TestPeep(unittest.TestCase):
             "Dex": 9,
             "Con": 10,
             "Cha": 10,
+            "Siz":  9,
+            "Soc": 12,
+            "Pow": 14,
         }
         data["stats"] = stats
         peep = peeps.Peep(data)
-        expected = "Str: 10, Int: 10, Wis: 10, Dex:  9, Con: 10, Cha: 10"
-        self.assertTrue(expected in peep.__str__())
-        self.assertIn("Temperament: ", peep.__str__())
-        self.assertIn("Plot: ", peep.__str__())
-        self.assertIn("Positive Traits: ", peep.__str__())
-        self.assertIn("Negative Traits: ", peep.__str__())
+        peep_result = peeps.peep_to_template(peep, "adnd")
+        expected_stats = "Str: 10 Int: 10 Wis: 10 Dex:  9 Con: 10 Cha: 10"
+        self.assertIn(expected_stats, peep_result) 
+        self.assertIn("Temperament: ", peep_result)
+        self.assertIn("Plot: ", peep_result)
+        self.assertIn("Positive Traits: ", peep_result)
+        self.assertIn("Negative Traits: ", peep_result)
 
 class TestPeepBuilder(unittest.TestCase):
     """Verifies peep_builder()"""
@@ -111,8 +115,10 @@ class TestPeepBuilder(unittest.TestCase):
             "is_alive": True,
         }
         peep = peeps.peep_builder(data)
+        peep_result = peeps.peep_to_template(peep, "adnd")
+
         expected = "Str:"
-        self.assertTrue(expected in peep.__str__())
+        self.assertTrue(expected in peep_result)
         self.assertTrue(peep.age == 16)
         self.assertTrue(peep.name() == "George Mythe")
         self.assertTrue(peep.gender == "m")
@@ -129,7 +135,6 @@ class TestPeepBuilder(unittest.TestCase):
         peep = peeps.peep_builder(data)
         self.assertTrue(peep.age == 86)
         self.assertFalse(peep.is_alive)
-        self.assertTrue("Deceased" in peep.__str__())
 
 
     def test_build_defaults(self):
@@ -244,4 +249,72 @@ class TestGetFromFile(unittest.TestCase):
     def test_get_all(self):
         result = peeps.get_from_file(self.test_file, 25)
         self.assertEqual(len(result), 4)
-        
+       
+class TestTemplates(unittest.TestCase):
+    def test_template_default(self):
+        """ Test the templating system. """
+        game = "fred"
+        result = peeps.pick_template(game)
+        expected_base = "{} [{}] Age: {:2}\n"
+        expected_stats_1 = "Str: {:2} Int: {:2} Wis: {:2} "
+        expected_stats_2 = "Dex: {:2} Con: {:2} Cha: {:2}\n"
+        expected_mental = [
+            "Temperament: {}\n",
+            "Plot: {}\n",
+            "Positive Traits: {}\n",
+            "Negative Traits: {}\n",
+            ]
+        self.assertIn(expected_base, result)
+        self.assertIn(expected_stats_1, result)
+        self.assertIn(expected_stats_2, result)
+        for item in expected_mental:
+            self.assertIn(item, result)
+
+
+    def test_template_brp(self):
+        """ Test the templating system. """
+        game = "brp"
+        result = peeps.pick_template(game)
+        expected_base = "{} [{}] Age: {:2}\n"
+        expected_stats_1 = "Str: {:2} Con: {:2} Siz: {:2} Int: {:2} "
+        expected_stats_2 = "Pow: {:2} Dex: {:2} App: {:2} Edu: {:2}\n"
+        self.assertIn(expected_base, result)
+        self.assertIn(expected_stats_1, result)
+        self.assertIn(expected_stats_2, result)
+
+
+class TestStatModifier(unittest.TestCase):
+    def test_lowest_stat(self):
+        expected = -3
+        result = peeps.rolled_stat_to_modifier(3)
+        self.assertEqual(expected, result)
+
+    def test_next_to_lowest_stat(self):
+        expected = -2
+        for num in range(4,5):
+            result = peeps.rolled_stat_to_modifier(num)
+            self.assertEqual(expected, result)
+
+    def test_low_stat(self):
+        expected = -1
+        for num in range(6,7):
+            result = peeps.rolled_stat_to_modifier(num)
+            self.assertEqual(expected, result)
+
+    def test_highest_stat(self):
+        expected = 3
+        for num in range(18,25):
+            result = peeps.rolled_stat_to_modifier(num)
+            self.assertEqual(expected, result)
+
+    def test_next_to_lowest_stat(self):
+        expected = 2
+        for num in range(16, 17):
+            result = peeps.rolled_stat_to_modifier(num)
+            self.assertEqual(expected, result)
+
+    def test_low_stat(self):
+        expected = 1
+        for num in range(14,15):
+            result = peeps.rolled_stat_to_modifier(num)
+            self.assertEqual(expected, result)
