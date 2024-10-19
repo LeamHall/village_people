@@ -18,21 +18,34 @@ import sqlite3
 import sys
 
 
-DATADIR                 = "data"
-MAX_AGE                 = 80
-MIN_CHILDBEARING_AGE    = 17
-MAX_CHILDBEARING_AGE    = 30
+DATADIR = "data"
+MAX_AGE = 80
+MIN_CHILDBEARING_AGE = 17
+MAX_CHILDBEARING_AGE = 30
 
-stat_names = ["Str", "Int", "Wis", "Dex", "Con", "Cha", "Siz", "Pow", "Soc", "App", "Edu"]
+stat_names = [
+    "Str",
+    "Int",
+    "Wis",
+    "Dex",
+    "Con",
+    "Cha",
+    "Siz",
+    "Pow",
+    "Soc",
+    "App",
+    "Edu",
+]
 
-def get_from_file(filename, number = 1):
-    """ 
+
+def get_from_file(filename, number=1):
+    """
     Gets number of unique items from a file.
     Ignores blank and "#" commented lines.
     """
 
     options = list()
-    result  = list()
+    result = list()
 
     if not os.path.exists(filename) or not os.path.isfile(filename):
         raise OSError("File {} does not exist.".format(filename))
@@ -56,13 +69,13 @@ def get_from_file(filename, number = 1):
 
 
 def child_age_range(m_age):
-    """ Returns a max and min of potential children's ages. """
+    """Returns a max and min of potential children's ages."""
     if m_age < MIN_CHILDBEARING_AGE:
-        oldest      = 0
-        youngest    = 0
+        oldest = 0
+        youngest = 0
     else:
-        oldest      = m_age - MIN_CHILDBEARING_AGE
-        youngest    = max(1, m_age - MAX_CHILDBEARING_AGE)
+        oldest = m_age - MIN_CHILDBEARING_AGE
+        youngest = max(1, m_age - MAX_CHILDBEARING_AGE)
     return oldest, youngest
 
 
@@ -93,7 +106,7 @@ def gen_stats(roll=3, keep=3):
     stats = {}
     for stat in stat_names:
         stats[stat] = roller(roll, 6, keep)
-    stats["Siz"] = roller(2, 6, add = 6)
+    stats["Siz"] = roller(2, 6, add=6)
     return stats
 
 
@@ -160,12 +173,17 @@ def write_family(family):
     Takes a list of family members, and prints each
     """
     family_string = ""
-    family_string += "Patron: {}\n".format(peep_to_template(family[0], args.game))
-    family_string += "Matron: {}\n".format(peep_to_template(family[1], args.game))
+    family_string += "Patron: {}\n".format(
+        peep_to_template(family[0], args.game)
+    )
+    family_string += "Matron: {}\n".format(
+        peep_to_template(family[1], args.game)
+    )
     if len(family) > 2:
         for member in family[2:]:
             family_string += "{}\n".format(peep_to_template(member, args.game))
     return family_string
+
 
 def peep_builder(data):
     """
@@ -188,13 +206,17 @@ def peep_builder(data):
     else:
         data["f_name"] = data.get("f_name", get_name("male"))
     data["temperament"] = ",".join(
-        get_from_file(os.path.join(DATADIR, "temperaments.txt"), 1))
+        get_from_file(os.path.join(DATADIR, "temperaments.txt"), 1)
+    )
     data["plot"] = ",".join(
-        get_from_file(os.path.join(DATADIR, "plots.txt"), 1))
+        get_from_file(os.path.join(DATADIR, "plots.txt"), 1)
+    )
     data["positive_traits"] = ", ".join(
-        get_from_file(os.path.join(DATADIR, "positive_traits.txt"), 2))
+        get_from_file(os.path.join(DATADIR, "positive_traits.txt"), 2)
+    )
     data["negative_traits"] = ", ".join(
-        get_from_file(os.path.join(DATADIR, "negative_traits.txt"), 2))
+        get_from_file(os.path.join(DATADIR, "negative_traits.txt"), 2)
+    )
     return Peep(data)
 
 
@@ -277,16 +299,16 @@ class Peep:
     """
 
     def __init__(self, data):
-        self.stats      = data.get("stats")
-        self.l_name     = data.get("l_name", "Smith")
-        self.f_name     = data.get("f_name", "Jim")
-        self.age        = data.get("age", 16)
-        self.gender     = data.get("gender", "f")
-        self.is_alive   = data.get("is_alive", True)
-        self.plot       = data.get("plot", "boring")
-        self.temperament        = data.get("temperament", "boring")
-        self.negative_traits    = data.get("negative_traits", "")
-        self.positive_traits    = data.get("positive_traits", "")
+        self.stats = data.get("stats")
+        self.l_name = data.get("l_name", "Smith")
+        self.f_name = data.get("f_name", "Jim")
+        self.age = data.get("age", 16)
+        self.gender = data.get("gender", "f")
+        self.is_alive = data.get("is_alive", True)
+        self.plot = data.get("plot", "boring")
+        self.temperament = data.get("temperament", "boring")
+        self.negative_traits = data.get("negative_traits", "")
+        self.positive_traits = data.get("positive_traits", "")
 
     def name(self):
         """
@@ -296,13 +318,15 @@ class Peep:
 
 
 def pick_template(game):
-    """ Set the output template based on the game system used. """
+    """Set the output template based on the game system used."""
     template = "{} [{}] Age: {:2}\n"
     if game == "brp":
         template += "Str: {:2} Con: {:2} Siz: {:2} Int: {:2} "
         template += "Pow: {:2} Dex: {:2} App: {:2} Edu: {:2}\n"
     else:
-        template += "Str: {:2} Int: {:2} Wis: {:2} Dex: {:2} Con: {:2} Cha: {:2}\n"
+        template += (
+            "Str: {:2} Int: {:2} Wis: {:2} Dex: {:2} Con: {:2} Cha: {:2}\n"
+        )
 
     template += "Temperament: {}\n"
     template += "Plot: {}\n"
@@ -311,49 +335,56 @@ def pick_template(game):
 
     return template
 
+
 def rolled_stat_to_modifier(stat):
-    """ Convert a 3d6 roll to a basic -3 to +3 modifier for Hauberk. """
+    """Convert a 3d6 roll to a basic -3 to +3 modifier for Hauberk."""
     modifier = 0
     if stat <= 3:
         modifier = -3
-    elif stat in range(4,5):
+    elif stat in range(4, 5):
         modifier = -2
-    elif stat in range(6,7):
+    elif stat in range(6, 7):
         modifier = -1
-    elif stat in range(14,15):
+    elif stat in range(14, 15):
         modifier = 1
-    elif stat in range(16,17):
+    elif stat in range(16, 17):
         modifier = 2
     elif stat >= 18:
         modifier = 3
 
     return modifier
 
+
 def peep_to_template(peep, game):
-    """ Create the output string for the peep. """
+    """Create the output string for the peep."""
     template = pick_template(game)
     peep_list = [peep.name(), peep.gender, peep.age]
     if game == "brp":
-        peep_list += [peep.stats['Str'], peep.stats['Con'], peep.stats['Siz']]
-        peep_list += [peep.stats['Int'], peep.stats['Pow'], peep.stats['Dex']]
-        peep_list += [peep.stats['App'], peep.stats['Edu']]
+        peep_list += [peep.stats["Str"], peep.stats["Con"], peep.stats["Siz"]]
+        peep_list += [peep.stats["Int"], peep.stats["Pow"], peep.stats["Dex"]]
+        peep_list += [peep.stats["App"], peep.stats["Edu"]]
     elif game == "hauberk":
         peep_list += [
-            rolled_stat_to_modifier(peep.stats['Str']),
-            rolled_stat_to_modifier(peep.stats['Int']),
-            rolled_stat_to_modifier(peep.stats['Wis']),
-            rolled_stat_to_modifier(peep.stats['Dex']),
-            rolled_stat_to_modifier(peep.stats['Con']),
-            rolled_stat_to_modifier(peep.stats['Cha']),
+            rolled_stat_to_modifier(peep.stats["Str"]),
+            rolled_stat_to_modifier(peep.stats["Int"]),
+            rolled_stat_to_modifier(peep.stats["Wis"]),
+            rolled_stat_to_modifier(peep.stats["Dex"]),
+            rolled_stat_to_modifier(peep.stats["Con"]),
+            rolled_stat_to_modifier(peep.stats["Cha"]),
         ]
     else:
-        peep_list += [peep.stats['Str'], peep.stats['Int'], peep.stats['Wis']]
-        peep_list += [peep.stats['Dex'], peep.stats['Con'], peep.stats['Cha']]
-    peep_list += [peep.temperament, peep.plot, peep.positive_traits, peep.negative_traits]
+        peep_list += [peep.stats["Str"], peep.stats["Int"], peep.stats["Wis"]]
+        peep_list += [peep.stats["Dex"], peep.stats["Con"], peep.stats["Cha"]]
+    peep_list += [
+        peep.temperament,
+        peep.plot,
+        peep.positive_traits,
+        peep.negative_traits,
+    ]
 
     return template.format(*peep_list)
 
-    
+
 if __name__ == "__main__":
     args = {}
     argparser = argparse.ArgumentParser()
@@ -371,8 +402,11 @@ if __name__ == "__main__":
         "--f-age", default=16, type=int, help="Age of the father, in years"
     )
     argparser.add_argument(
-        "-g", "--game",
-        default = "adnd", type=str, help="Game system: adnd, brp, hauberk"
+        "-g",
+        "--game",
+        default="adnd",
+        type=str,
+        help="Game system: adnd, brp, hauberk",
     )
 
     args = argparser.parse_args()
@@ -388,7 +422,6 @@ if __name__ == "__main__":
         family_data = write_family(family)
         print(family_data)
     else:
-        peep        = peep_builder({})
+        peep = peep_builder({})
         peep_string = peep_to_template(peep, args.game)
         print(peep_string)
-

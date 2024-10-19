@@ -7,8 +7,9 @@ test:
 	python -m unittest
 
 lint:
+	python -m black -l 79 .
 	-flake8 --ignore E251,E266,W391,W503,E241,E221
-	-pylint
+	-pylint .
 
 coverage:
 	coverage run -m unittest

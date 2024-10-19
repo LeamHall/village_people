@@ -88,7 +88,7 @@ class TestPeep(unittest.TestCase):
             "Dex": 9,
             "Con": 10,
             "Cha": 10,
-            "Siz":  9,
+            "Siz": 9,
             "Soc": 12,
             "Pow": 14,
         }
@@ -96,11 +96,12 @@ class TestPeep(unittest.TestCase):
         peep = peeps.Peep(data)
         peep_result = peeps.peep_to_template(peep, "adnd")
         expected_stats = "Str: 10 Int: 10 Wis: 10 Dex:  9 Con: 10 Cha: 10"
-        self.assertIn(expected_stats, peep_result) 
+        self.assertIn(expected_stats, peep_result)
         self.assertIn("Temperament: ", peep_result)
         self.assertIn("Plot: ", peep_result)
         self.assertIn("Positive Traits: ", peep_result)
         self.assertIn("Negative Traits: ", peep_result)
+
 
 class TestPeepBuilder(unittest.TestCase):
     """Verifies peep_builder()"""
@@ -108,10 +109,10 @@ class TestPeepBuilder(unittest.TestCase):
     def test_build_peep(self):
         """basic builder tests"""
         data = {
-            "age":      16,
-            "l_name":   "Mythe",
-            "gender":   "m",
-            "f_name":   "George",
+            "age": 16,
+            "l_name": "Mythe",
+            "gender": "m",
+            "f_name": "George",
             "is_alive": True,
         }
         peep = peeps.peep_builder(data)
@@ -127,15 +128,14 @@ class TestPeepBuilder(unittest.TestCase):
     def test_build_old_peep(self):
         """basic builder tests"""
         data = {
-            "age":      86,
-            "l_name":   "Mythe",
-            "gender":   "m",
-            "f_name":   "George",
+            "age": 86,
+            "l_name": "Mythe",
+            "gender": "m",
+            "f_name": "George",
         }
         peep = peeps.peep_builder(data)
         self.assertTrue(peep.age == 86)
         self.assertFalse(peep.is_alive)
-
 
     def test_build_defaults(self):
         """Tests the default settings of the builder"""
@@ -194,7 +194,7 @@ class TestGetName(unittest.TestCase):
 
 
 class TestChildAgeRange(unittest.TestCase):
-    """ Tests the min and max child age range. """
+    """Tests the min and max child age range."""
 
     def test_over_max_childbearing_age(self):
         mother_age = 84
@@ -216,13 +216,13 @@ class TestChildAgeRange(unittest.TestCase):
 
 
 class TestGetFromFile(unittest.TestCase):
-    """ Tests the ability to get a number of items from a file. """
-    
-    def setUp(self): 
-        self.test_dir   = tempfile.TemporaryDirectory()
-        test_file_name  = "test_file.txt"
-        self.test_file  = os.path.join(self.test_dir.name, test_file_name)
-        with open( self.test_file , 'w') as f:
+    """Tests the ability to get a number of items from a file."""
+
+    def setUp(self):
+        self.test_dir = tempfile.TemporaryDirectory()
+        test_file_name = "test_file.txt"
+        self.test_file = os.path.join(self.test_dir.name, test_file_name)
+        with open(self.test_file, "w") as f:
             f.write("cool headed\n")
             f.write("hot headed\n")
             f.write("odd\n")
@@ -241,7 +241,6 @@ class TestGetFromFile(unittest.TestCase):
             self.assertIn(r.lower(), possible_results)
 
     def test_no_comments(self):
-        possible_results = ["#cool headed", "#hot headed", "odd", "#quiet"]
         for _ in range(10):
             result = peeps.get_from_file(self.test_file, 1)
             self.assertNotIn("#", result[0].title())
@@ -249,10 +248,11 @@ class TestGetFromFile(unittest.TestCase):
     def test_get_all(self):
         result = peeps.get_from_file(self.test_file, 25)
         self.assertEqual(len(result), 4)
-       
+
+
 class TestTemplates(unittest.TestCase):
     def test_template_default(self):
-        """ Test the templating system. """
+        """Test the templating system."""
         game = "fred"
         result = peeps.pick_template(game)
         expected_base = "{} [{}] Age: {:2}\n"
@@ -263,16 +263,15 @@ class TestTemplates(unittest.TestCase):
             "Plot: {}\n",
             "Positive Traits: {}\n",
             "Negative Traits: {}\n",
-            ]
+        ]
         self.assertIn(expected_base, result)
         self.assertIn(expected_stats_1, result)
         self.assertIn(expected_stats_2, result)
         for item in expected_mental:
             self.assertIn(item, result)
 
-
     def test_template_brp(self):
-        """ Test the templating system. """
+        """Test the templating system."""
         game = "brp"
         result = peeps.pick_template(game)
         expected_base = "{} [{}] Age: {:2}\n"
@@ -291,30 +290,30 @@ class TestStatModifier(unittest.TestCase):
 
     def test_next_to_lowest_stat(self):
         expected = -2
-        for num in range(4,5):
+        for num in range(4, 5):
             result = peeps.rolled_stat_to_modifier(num)
             self.assertEqual(expected, result)
 
     def test_low_stat(self):
         expected = -1
-        for num in range(6,7):
+        for num in range(6, 7):
             result = peeps.rolled_stat_to_modifier(num)
             self.assertEqual(expected, result)
 
     def test_highest_stat(self):
         expected = 3
-        for num in range(18,25):
+        for num in range(18, 25):
             result = peeps.rolled_stat_to_modifier(num)
             self.assertEqual(expected, result)
 
-    def test_next_to_lowest_stat(self):
+    def test_next_to_highest_stat(self):
         expected = 2
         for num in range(16, 17):
             result = peeps.rolled_stat_to_modifier(num)
             self.assertEqual(expected, result)
 
-    def test_low_stat(self):
+    def test_high_stat(self):
         expected = 1
-        for num in range(14,15):
+        for num in range(14, 15):
             result = peeps.rolled_stat_to_modifier(num)
             self.assertEqual(expected, result)
