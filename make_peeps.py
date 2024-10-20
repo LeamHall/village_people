@@ -15,7 +15,6 @@ import os
 import os.path
 import random
 import sqlite3
-import sys
 
 
 DATADIR = "data"
@@ -255,42 +254,6 @@ def get_name(name_type):
     return name
 
 
-def peep_init():
-    """
-    Creates the data dir and initializes the peep.db
-    """
-    datafile = "peeps.db"
-    table = "peeps"
-    datastore = os.path.join(DATADIR, datafile)
-    if not os.path.exists(DATADIR):
-        os.makedirs(DATADIR)
-    con = sqlite3.connect(datastore)
-    cur = con.cursor()
-    cur.execute("DROP TABLE IF EXISTS {}".format(table))
-    table = """
-                    CREATE TABLE peeps (
-                        _id         INTEGER PRIMARY KEY ASC,
-                        l_name      CHAR(25),
-                        f_name      CHAR(25),
-                        stat_str    INT,
-                        stat_int    INT,
-                        stat_wis    INT,
-                        stat_dex    INT,
-                        stat_con    INT,
-                        stat_cha    INT,
-                        gender      CHAR(1),
-                        dob         INT,
-                        spouse_id   INT,
-                        father_id   INT,
-                        mother_id   INT,
-                        hit_points  INT,
-                        village     CHAR(25)
-                    );
-                    """
-    cur.execute(table)
-    con.close()
-
-
 class Peep:
     """
     Peep holds the data for a generated Peep.
@@ -389,9 +352,6 @@ if __name__ == "__main__":
     args = {}
     argparser = argparse.ArgumentParser()
     argparser.add_argument(
-        "-i", "--init", action="store_true", help="Initialize data"
-    )
-    argparser.add_argument(
         "-f",
         "--family",
         action="store_true",
@@ -411,10 +371,7 @@ if __name__ == "__main__":
 
     args = argparser.parse_args()
 
-    if args.init:
-        peep_init()
-        sys.exit(0)
-    elif args.family:
+    if args.family:
         input_data = {}
         if args.f_age > 14:
             input_data["f_age"] = args.f_age

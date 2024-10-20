@@ -1,9 +1,0 @@
-SR 
-SA 
-AS 
-PO3 
-PO2 
-PO1 
-CPO 
-SCPO 
-MCPO
