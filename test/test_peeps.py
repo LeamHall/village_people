@@ -10,8 +10,6 @@
 test_peeps.py tests the make_peeps code.
 """
 
-import os.path
-import tempfile
 import unittest
 
 import make_peeps as peeps
@@ -40,6 +38,26 @@ class TestRoller(unittest.TestCase):
         """Run multiple tests to ensure the kept dice stay within the range"""
         for _ in range(1, 100):
             roll = peeps.roller(30, 6, 3)
+            self.assertTrue(roll in range(3, 19))
+
+    def test_negative_num(self):
+        for _ in range(1, 100):
+            roll = peeps.roller(-1, 6)
+            self.assertTrue(roll in range(1, 7))
+
+    def test_low_die(self):
+        for _ in range(1, 100):
+            roll = peeps.roller(1, 1)
+            self.assertTrue(roll in range(1, 7))
+
+    def test_low_keep(self):
+        for _ in range(1, 100):
+            roll = peeps.roller(3, 6, 0)
+            self.assertTrue(roll in range(3, 19))
+
+    def test_high_keep(self):
+        for _ in range(1, 100):
+            roll = peeps.roller(3, 6, 4)
             self.assertTrue(roll in range(3, 19))
 
 
@@ -119,9 +137,10 @@ class TestPeepBuilder(unittest.TestCase):
         peep_result = peeps.peep_to_template(peep, "adnd")
 
         expected = "Str:"
-        self.assertTrue(expected in peep_result)
+        self.assertIn(expected, peep_result)
         self.assertTrue(peep.age == 16)
         self.assertTrue(peep.name() == "George Mythe")
+        self.assertIn("[M]", peep_result)
         self.assertTrue(peep.gender == "m")
         self.assertTrue(peep.is_alive)
 
@@ -171,26 +190,49 @@ class TestStartFamily(unittest.TestCase):
 class TestPeepChild(unittest.TestCase):
     """Ensures the child meets expectations"""
 
-    def test_base_child(self):
+    def test_very_young_child(self):
+        """Check the initial creation, given data"""
+        data = {"l_name": "Garibaldi", "age": 4}
+        child = peeps.peep_child(data)
+        self.assertTrue(child.l_name == "Garibaldi")
+        self.assertTrue(child.age == 4)
+        self.assertTrue(child.stats["Siz"] <= 3)
+
+    def test_young_child(self):
         """Check the initial creation, given data"""
         data = {"l_name": "Garibaldi", "age": 5}
         child = peeps.peep_child(data)
         self.assertTrue(child.l_name == "Garibaldi")
         self.assertTrue(child.age == 5)
+        self.assertTrue(child.stats["Siz"] < 9)
 
 
-class TestGetName(unittest.TestCase):
-    """Checks all of the get_name() functionality"""
+class TestGetDBItem(unittest.TestCase):
+    """Checks all of the get_db_item() functionality"""
 
-    def test_last_name(self):
-        """Ensure the name isn't an empty string"""
+    def test_db_item(self):
+        """Ensure the item isn't an empty string"""
 
-        last = peeps.get_name("last")
-        male = peeps.get_name("male")
-        female = peeps.get_name("female")
+        last = peeps.get_db_item("human_last")
         self.assertTrue(len(last) >= 2)
+
+        male = peeps.get_db_item("human_male_first")
         self.assertTrue(len(male) >= 2)
+
+        female = peeps.get_db_item("human_female_first")
         self.assertTrue(len(female) >= 2)
+
+        plot = peeps.get_db_item("plots")
+        self.assertTrue(len(plot) >= 2)
+
+        temperament = peeps.get_db_item("temperaments")
+        self.assertTrue(len(temperament) >= 2)
+
+        positive_trait = peeps.get_db_item("positive_traits")
+        self.assertTrue(len(positive_trait) >= 2)
+
+        negative_trait = peeps.get_db_item("negative_traits")
+        self.assertTrue(len(negative_trait) >= 2)
 
 
 class TestChildAgeRange(unittest.TestCase):
@@ -213,41 +255,6 @@ class TestChildAgeRange(unittest.TestCase):
         max_16, min_16 = peeps.child_age_range(mother_age)
         self.assertTrue(max_16 == 0)
         self.assertTrue(min_16 == 0)
-
-
-class TestGetFromFile(unittest.TestCase):
-    """Tests the ability to get a number of items from a file."""
-
-    def setUp(self):
-        self.test_dir = tempfile.TemporaryDirectory()
-        test_file_name = "test_file.txt"
-        self.test_file = os.path.join(self.test_dir.name, test_file_name)
-        with open(self.test_file, "w") as f:
-            f.write("cool headed\n")
-            f.write("hot headed\n")
-            f.write("odd\n")
-            f.write("quiet\n")
-
-    def tearDown(self):
-        self.test_dir.cleanup()
-
-    def test_get_missing_file(self):
-        self.assertRaises(OSError, peeps.get_from_file, "fred")
-
-    def test_get_one(self):
-        possible_results = ["cool headed", "hot headed", "odd", "quiet"]
-        result = peeps.get_from_file(self.test_file, 1)
-        for r in result:
-            self.assertIn(r.lower(), possible_results)
-
-    def test_no_comments(self):
-        for _ in range(10):
-            result = peeps.get_from_file(self.test_file, 1)
-            self.assertNotIn("#", result[0].title())
-
-    def test_get_all(self):
-        result = peeps.get_from_file(self.test_file, 25)
-        self.assertEqual(len(result), 4)
 
 
 class TestTemplates(unittest.TestCase):

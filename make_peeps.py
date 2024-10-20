@@ -37,36 +37,6 @@ stat_names = [
 ]
 
 
-def get_from_file(filename, number=1):
-    """
-    Gets number of unique items from a file.
-    Ignores blank and "#" commented lines.
-    """
-
-    options = list()
-    result = list()
-
-    if not os.path.exists(filename) or not os.path.isfile(filename):
-        raise OSError("File {} does not exist.".format(filename))
-
-    with open(filename, "r") as in_file:
-        for line in in_file:
-            line = line.strip()
-            if line.startswith("#"):
-                continue
-            if len(line):
-                options.append(line)
-
-    if len(options) <= number:
-        return options
-
-    while len(result) < number:
-        possible = random.choice(options)
-        if possible not in result:
-            result.append(possible.title())
-    return result
-
-
 def child_age_range(m_age):
     """Returns a max and min of potential children's ages."""
     if m_age < MIN_CHILDBEARING_AGE:
@@ -78,18 +48,20 @@ def child_age_range(m_age):
     return oldest, youngest
 
 
-def roller(num, die, keep=0, add=0):
+def roller(num=1, die=6, keep=0, add=0):
     """
-    Takes two positive integers, and an optional third.
-    Returns a random int between keep and die * keep
+    Takes two positive integers, and an optional third and fourth.
+    Returns a random int between keep and die * keep, plus add.
     """
     num = int(num)
     die = int(die)
     keep = int(keep)
-    if num < 0 or die < 0:
-        print("Number of dice, and sides of dice, must be positive integer")
-        return 0
-    if keep < 0 or keep > num:
+    add = int(add)
+    if num < 1:
+        num = 1
+    if die < 2:
+        die = max(die, 6)
+    if keep < 1 or keep > num:
         keep = num
     rolls = []
     for _ in range(num):
@@ -134,9 +106,9 @@ def start_family(data):
     family = []
     father_age = data.get("f_age", 16)
     mother_age = data.get("m_age", father_age - 2)
-    last_name = data.get("l_name", get_name("last"))
-    f_f_name = data.get("f_f_name", get_name("male"))
-    m_f_name = data.get("m_f_name", get_name("female"))
+    last_name = data.get("l_name", get_db_item("human_last"))
+    f_f_name = data.get("f_f_name", get_db_item("human_male_first"))
+    m_f_name = data.get("m_f_name", get_db_item("human_female_first"))
     father = peep_builder(
         {
             "age": father_age,
@@ -188,8 +160,8 @@ def peep_builder(data):
     """
     Generates the data and builds it into a Peep
     """
-    young_child_max = {"Str": 3, "Wis": 3, "Dex": 3}
-    older_child_max = {"Str": 5, "Wis": 5, "Dex": 5}
+    young_child_max = {"Str": 3, "Wis": 3, "Dex": 3, "Siz": 3}
+    older_child_max = {"Str": 5, "Wis": 5, "Dex": 5, "Siz": 8}
     data["stats"] = gen_stats()
     data["age"] = data.get("age", 16)
     if data["age"] < 5:
@@ -199,22 +171,18 @@ def peep_builder(data):
     elif data["age"] > MAX_AGE:
         data["is_alive"] = False
     data["gender"] = data.get("gender", random.choice(["m", "f"]))
-    data["l_name"] = data.get("l_name", get_name("last"))
+    data["l_name"] = data.get("l_name", get_db_item("human_last"))
     if data["gender"] == "f":
-        data["f_name"] = data.get("f_name", get_name("female"))
+        data["f_name"] = data.get("f_name", get_db_item("human_female_first"))
     else:
-        data["f_name"] = data.get("f_name", get_name("male"))
-    data["temperament"] = ",".join(
-        get_from_file(os.path.join(DATADIR, "temperaments.txt"), 1)
+        data["f_name"] = data.get("f_name", get_db_item("human_male_first"))
+    data["temperament"] = data.get("temperament", get_db_item("temperaments"))
+    data["plot"] = data.get("plot", get_db_item("plots"))
+    data["negative_traits"] = data.get(
+        "negative_traits", get_db_item("negative_traits")
     )
-    data["plot"] = ",".join(
-        get_from_file(os.path.join(DATADIR, "plots.txt"), 1)
-    )
-    data["positive_traits"] = ", ".join(
-        get_from_file(os.path.join(DATADIR, "positive_traits.txt"), 2)
-    )
-    data["negative_traits"] = ", ".join(
-        get_from_file(os.path.join(DATADIR, "negative_traits.txt"), 2)
+    data["positive_traits"] = data.get(
+        "positive_traits", get_db_item("positive_traits")
     )
     return Peep(data)
 
@@ -227,31 +195,41 @@ def peep_child(data):
     return child
 
 
-def get_name(name_type):
+def get_db_item(table):
     """
-    Gets one random name (last, female, male) from a database
+    Gets 1 random item from 'table'.
     """
-    datafile = "names.db"
+
+    datafile = "build_village_peeps.db"
     datastore = os.path.join(DATADIR, datafile)
     if not os.path.exists(datastore):
         raise FileNotFoundError
-    if name_type == "male":
-        table = "humaniti_male_first"
-    elif name_type == "female":
-        table = "humaniti_female_first"
-    else:
-        table = "humaniti_last"
+
     try:
         con = sqlite3.connect(datastore)
+        cur = con.cursor()
+        table_list = cur.execute(
+            "SELECT name FROM sqlite_master WHERE type='table';"
+        )
+        possible_tables = list()
+        for tup in table_list.fetchall():
+            possible_tables.append(tup[0])
     except Exception as e:
-        print(e)
-    cur = con.cursor()
+        print("EXCEPTION: ", e)
+
+    if table not in possible_tables:
+        raise ValueError(
+            "Table {} not found, options are: {} ".format(
+                table, ", ".join(possible_tables)
+            )
+        )
+
     result = cur.execute(
-        "SELECT * from {} ORDER BY RANDOM() LIMIT 1".format(table)
+        "SELECT item from {} ORDER BY RANDOM() LIMIT 1".format(table)
     )
-    name = result.fetchone()[0]
+    item = result.fetchone()[0]
     con.close()
-    return name
+    return item
 
 
 class Peep:
@@ -321,7 +299,7 @@ def rolled_stat_to_modifier(stat):
 def peep_to_template(peep, game):
     """Create the output string for the peep."""
     template = pick_template(game)
-    peep_list = [peep.name(), peep.gender, peep.age]
+    peep_list = [peep.name(), peep.gender.upper(), peep.age]
     if game == "brp":
         peep_list += [peep.stats["Str"], peep.stats["Con"], peep.stats["Siz"]]
         peep_list += [peep.stats["Int"], peep.stats["Pow"], peep.stats["Dex"]]
@@ -356,21 +334,27 @@ if __name__ == "__main__":
         "--family",
         action="store_true",
         default=False,
-        help="Create a family",
+        help="Create a family (default False)",
     )
     argparser.add_argument(
-        "--f-age", default=16, type=int, help="Age of the father, in years"
+        "--f-age",
+        default=16,
+        type=int,
+        help="Age of the father, in years (default 16)",
     )
     argparser.add_argument(
         "-g",
         "--game",
         default="adnd",
         type=str,
-        help="Game system: adnd, brp, hauberk",
+        help="Game system: adnd, brp, hauberk (default adnd)",
     )
 
     args = argparser.parse_args()
 
+    args.game = args.game.lower()
+    if args.game not in ["adnd", "brp", "hauberk"]:
+        args.game = "adnd"
     if args.family:
         input_data = {}
         if args.f_age > 14:
